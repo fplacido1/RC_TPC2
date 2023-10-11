@@ -1,32 +1,40 @@
+import enum
 import socket
 import pickle
 import os.path
 import sys
 import random
 
-class serverResponse(enum.Enum):
-    ERROR0 = "OK"
+
+class ServerResponse(enum.Enum):
+    OK = "OK"
     ERROR1 = "file does not exist"
     ERROR2 = "invalid offset"
+
 
 localIP = "127.0.0.1"
 buffer_size = 2048
 
-def serverReply(message, udp_socket_sv, client_address):
+
+def server_reply(message, udp_socket_sv, client_address):
     rand = random.randint(0, 10)
     if rand > 2:
-        udp_socket_sv.sendTo(message, client_address) #! possibilidade de faltar um return
-    
+        udp_socket_sv.sendto(message, client_address)
+    return
+
+
 def send_file(udp_socket_sv, client_address, fileName, offset, nBytes):
     file = open(fileName, 'r')
     file.seek(offset)
-    message = file.read(nBytes) 
+    message = file.read(nBytes)
     file.close()
-    request = (serverResponse.ERROR0.value, nBytes, message)
+    request = (ServerResponse.OK.value, len(message.encode()), message)
     req = pickle.dumps(request)
-    serverReply(req, udp_socket_sv, client_address)
+    server_reply(req, udp_socket_sv, client_address)
+
 
 def wait_for_connection(udp_socket_sv):
+    print("Server waiting for client request.\n")
     while True:
         message, client_address = udp_socket_sv.recvfrom(buffer_size)
         request = pickle.loads(message)
@@ -34,17 +42,17 @@ def wait_for_connection(udp_socket_sv):
         offset = request[1]
         nBytes = request[2]
         if not os.path.isfile(fileName):
-            request = (serverResponse.ERROR1.value, 0, 0)
+            request = (ServerResponse.ERROR1.value, 0, 0)
             req = pickle.dumps(request)
-            serverReply(req, udp_socket_sv, client_address)
-        elif offset < 0 and offset > os.path.filesize(fileName):
-            request = (serverResponse.ERROR2.value, 0, 0)
+            server_reply(req, udp_socket_sv, client_address)
+        elif 0 > offset > os.path.getsize(fileName):
+            request = (ServerResponse.ERROR2.value, 0, 0)
             req = pickle.dumps(request)
-            serverReply(req, udp_socket_sv, client_address)
+            server_reply(req, udp_socket_sv, client_address)
         else:
-          send_file(udp_socket_sv, client_address, fileName, offset, nBytes)
+            send_file(udp_socket_sv, client_address, fileName, offset, nBytes)
 
- 
+
 def main():
     n = len(sys.argv) - 1
 
