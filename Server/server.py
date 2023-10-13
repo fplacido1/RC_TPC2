@@ -7,9 +7,9 @@ import random
 
 
 class ServerResponse(enum.Enum):
-    OK = "OK"
-    ERROR1 = "file does not exist"
-    ERROR2 = "invalid offset"
+    OK = 0
+    ERROR1 = 1
+    ERROR2 = 2
 
 
 localIP = "127.0.0.1"
@@ -17,18 +17,18 @@ buffer_size = 2048
 
 
 def server_reply(message, udp_socket_sv, client_address):
-    rand = random.randint(0, 10)
-    if rand > 2:
+    rand = random.randint(0, 9)
+    if rand > 1:
         udp_socket_sv.sendto(message, client_address)
     return
 
 
 def send_file(udp_socket_sv, client_address, fileName, offset, nBytes):
-    file = open(fileName, 'r')
+    file = open(fileName, 'rb')
     file.seek(offset)
     message = file.read(nBytes)
     file.close()
-    request = (ServerResponse.OK.value, len(message.encode()), message)
+    request = (ServerResponse.OK.value, len(message), message)
     req = pickle.dumps(request)
     server_reply(req, udp_socket_sv, client_address)
 
