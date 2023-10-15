@@ -18,7 +18,7 @@ buffer_size = 2048
 
 def server_reply(message, udp_socket_sv, client_address):
     rand = random.randint(0, 9)
-    if rand > 1:
+    if rand > 2:
         udp_socket_sv.sendto(message, client_address)
     return
 
